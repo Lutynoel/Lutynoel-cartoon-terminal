@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a14">
+<title>Cartoon Studio Pro</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js"></script>
+<style>
+:root{--bg:#0a0a14;--card:#14141f;--border:#252535;--accent:#f472b6;--accent2:#60a5fa;--text:#f0f0ff;--muted:#8b8ba7;--green:#34d399;--red:#f87171;--yellow:#fbbf24;--purple:#a855f7}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:0;line-height:1.5;font-size:14px}
+header{background:linear-gradient(135deg,#1a1a2e,#0f0f1e);padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px;font-weight:900;color:var(--accent);font-size:16px}
+.logo-icon{background:linear-gradient(135deg,var(--accent),var(--accent2));width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.main{padding:15px;max-width:900px;margin:0 auto;padding-bottom:100px}
+.card{background:var(--card);border:1px solid var(--border);padding:16px;border-radius:14px;margin-bottom:14px}
+label{font-size:11px;color:var(--muted);font-weight:bold;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+input,select,textarea{width:100%;padding:12px;background:#08080f;color:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;font-size:14px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{min-height:80px;resize:vertical}
+button{cursor:pointer;font-family:inherit;border:none;border-radius:10px;font-weight:bold;font-size:14px;padding:12px 16px}
+.btn-primary{width:100%;padding:15px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:15px;box-shadow:0 4px 15px rgba(244,114,182,.3)}
+.btn-secondary{width:100%;padding:12px;background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn-green{width:100%;padding:12px;background:var(--green);color:#000}
+.btn-red{width:100%;padding:12px;background:rgba(248,113,113,.15);color:var(--red);border:1px solid var(--red)}
+.btn-small{padding:8px 14px;font-size:12px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+.tab{flex:1;min-width:80px;padding:11px 10px;background:#08080f;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-weight:bold;font-size:12px;white-space:nowrap;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+.scene-item{background:#08080f;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;position:relative}
+.scene-thumb{width:70px;height:70px;border-radius:8px;background:#1a1a2a;flex-shrink:0;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--muted)}
+.scene-info{flex:1;min-width:0}
+.scene-info strong{display:block;font-size:13px;margin-bottom:4px}
+.scene-info small{color:var(--muted);font-size:11px;display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.scene-actions{display:flex;gap:6px;flex-direction:column;flex-shrink:0}
+.icon-btn{width:32px;height:32px;padding:0;background:rgba(244,114,182,.15);color:var(--accent);border:none;border-radius:8px;font-size:14px;display:flex;align-items:center;justify-content:center}
+.icon-btn.danger{background:rgba(248,113,113,.15);color:var(--red)}
+.preview-box{background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;margin-bottom:14px;position:relative;display:flex;align-items:center;justify-content:center;border:2px solid var(--border)}
+#previewCanvas{width:100%;height:100%;object-fit:contain;background:#000}
+.preview-overlay{position:absolute;bottom:0;left:0;right:0;padding:10px;background:linear-gradient(to top,rgba(0,0,0,.9),transparent);color:#fff;font-size:12px;display:flex;justify-content:space-between;pointer-events:none}
+.info{background:rgba(96,165,250,.1);border:1px solid var(--accent2);color:#bfdbfe;padding:10px 12px;border-radius:10px;font-size:11px;line-height:1.6;margin-bottom:12px}
+.warn{background:rgba(251,191,36,.1);border:1px solid var(--yellow);color:#fde68a;padding:10px 12px;border-radius:10px;font-size:11px;line-height:1.6;margin-bottom:12px}
+.success{background:rgba(52,211,153,.1);border:1px solid var(--green);color:#6ee7b7;padding:10px 12px;border-radius:10px;font-size:11px;line-height:1.6;margin-bottom:12px}
+.danger{background:rgba(248,113,113,.1);border:1px solid var(--red);color:#fca5a5;padding:10px 12px;border-radius:10px;font-size:11px;line-height:1.6;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.mini-box{background:#08080f;border:1px solid var(--border);padding:12px;border-radius:10px}
+.stat-val{font-size:20px;font-weight:900;color:var(--accent)}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:#fff;animation:spin .8s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:20px;left:20px;right:20px;max-width:380px;margin:0 auto;background:var(--accent);color:#fff;padding:14px 20px;border-radius:10px;z-index:9999;font-weight:bold;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.chip{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:bold;display:inline-block;margin:2px}
+.chip-done{background:rgba(52,211,153,.15);color:var(--green);border:1px solid var(--green)}
+.chip-pending{background:rgba(251,191,36,.15);color:var(--yellow);border:1px solid var(--yellow)}
+.chip-fail{background:rgba(248,113,113,.15);color:var(--red);border:1px solid var(--red)}
+.progress{width:100%;height:8px;background:#1a1a2a;border-radius:4px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s;width:0%}
+.music-note{display:inline-block;animation:bounce 1s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.template-card{background:#08080f;border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;text-align:center;transition:all .2s}
+.template-card:active{transform:scale(.97);border-color:var(--accent)}
+.template-card .emoji{font-size:32px;margin-bottom:6px}
+.template-card .name{font-size:12px;font-weight:bold;color:var(--text)}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal.active{display:flex}
+.modal-content{width:100%;max-width:600px;background:var(--card);border:1px solid var(--accent);border-radius:14px;padding:20px;position:relative;margin:20px 0}
+.modal-close{position:absolute;top:12px;right:12px;background:var(--red);color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;font-weight:bold}
+.audio-wave{display:flex;align-items:center;gap:2px;height:20px}
+.audio-wave span{width:3px;background:var(--accent);border-radius:2px;animation:wave 1s infinite ease-in-out}
+.audio-wave span:nth-child(2){animation-delay:.1s}
+.audio-wave span:nth-child(3){animation-delay:.2s}
+.audio-wave span:nth-child(4){animation-delay:.3s}
+.audio-wave span:nth-child(5){animation-delay:.4s}
+@keyframes wave{0%,100%{height:6px}50%{height:20px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-icon">🎬</div> Cartoon Studio Pro</div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-small" style="background:rgba(96,165,250,.15);color:var(--accent2);border:1px solid var(--accent2);" onclick="showHelp()">❓</button>
+    <button class="btn-small" style="background:rgba(52,211,153,.15);color:var(--green);border:1px solid var(--green);" onclick="newProject()">➕ New</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('story',this)">📖 Story</button>
+    <button class="tab" onclick="switchTab('scenes',this)">🎬 Scenes</button>
+    <button class="tab" onclick="switchTab('voice',this)">🎤 Voice</button>
+    <button class="tab" onclick="switchTab('music',this)">🎵 Music</button>
+    <button class="tab" onclick="switchTab('export',this)">📤 Export</button>
+  </div>
+
+  <!-- STORY TAB -->
+  <div id="tab-story">
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">📖 Project Info</h3>
+      <label>Video Title</label>
+      <input type="text" id="projectTitle" placeholder="The Little Lion Who Learned to Share">
+      <label>Language</label>
+      <select id="projectLang">
+        <option value="en">🇬🇧 English</option>
+        <option value="sw">🇹🇿 Kiswahili</option>
+      </select>
+      <label>Style (AI will use this for images)</label>
+      <select id="projectStyle">
+        <option value="cute 3D Pixar style children book illustration, soft colors, warm lighting, cheerful">🎨 Pixar 3D (Kids friendly)</option>
+        <option value="cute 2D cartoon style, bright colors, simple shapes, Disney Junior style">🎨 2D Cartoon (Classic)</option>
+        <option value="watercolor children book illustration, soft pastel colors, gentle">🎨 Watercolor (Soft)</option>
+        <option value="anime style kids cartoon, bright colors, kawaii characters">🎨 Anime Kids</option>
+        <option value="claymation style, plasticine characters, stop motion look, colorful">🎨 Claymation</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">✨ Templates</h3>
+      <div class="info">Chagua template — itakupa structure ya hadithi</div>
+      <div class="grid-2" style="margin-top:10px;">
+        <div class="template-card" onclick="useTemplate('share')">
+          <div class="emoji">🦁</div>
+          <div class="name">Sharing Lesson</div>
+        </div>
+        <div class="template-card" onclick="useTemplate('brave')">
+          <div class="emoji">🌟</div>
+          <div class="name">Be Brave</div>
+        </div>
+        <div class="template-card" onclick="useTemplate('friends')">
+          <div class="emoji">🐘</div>
+          <div class="name">New Friend</div>
+        </div>
+        <div class="template-card" onclick="useTemplate('abc')">
+          <div class="emoji">🔤</div>
+          <div class="name">Learn ABC</div>
+        </div>
+        <div class="template-card" onclick="useTemplate('numbers')">
+          <div class="emoji">🔢</div>
+          <div class="name">Counting 1-10</div>
+        </div>
+        <div class="template-card" onclick="useTemplate('colors')">
+          <div class="emoji">🌈</div>
+          <div class="name">Colors Song</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🛠️ Generate Story</h3>
+      <div class="info">
+        Weka <strong>title</strong> na <strong>main character</strong>. App itatengeneza scenes 8-12 automatic. Kisha unaweza kubadilisha.
+      </div>
+      <label>Main Character (description)</label>
+      <textarea id="mainChar" placeholder="e.g. A small golden lion cub named Simba who loves mangoes and has a tiny red scarf"></textarea>
+      <label>Story Outline (optional)</label>
+      <textarea id="storyOutline" placeholder="Simba finds a mango tree. He learns to share with his friends. They become best friends."></textarea>
+      <button class="btn-primary" onclick="generateStory()" id="genStoryBtn">✨ Generate Scene Plan</button>
+    </div>
+  </div>
+
+  <!-- SCENES TAB -->
+  <div id="tab-scenes" style="display:none">
+    <div class="card">
+      <div class="preview-box">
+        <canvas id="previewCanvas" width="1280" height="720"></canvas>
+        <div class="preview-overlay">
+          <span id="previewSceneInfo">Scene 0 / 0</span>
+          <span id="previewDuration">0s</span>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:10px;">
+        <button class="btn-small" style="background:#1a1a2a;color:var(--text);" onclick="previewPrev()">◀ Prev</button>
+        <button class="btn-small" style="background:var(--accent);color:#fff;" onclick="previewPlay()" id="playBtn">▶ Play</button>
+        <button class="btn-small" style="background:#1a1a2a;color:var(--text);" onclick="previewNext()">Next ▶</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;color:var(--accent);font-size:16px;">🎬 Scenes</h3>
+        <button class="btn-small" style="background:var(--green);color:#000;" onclick="addScene()">➕ Add</button>
+      </div>
+      <div id="scenesList"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🖼️ Generate All Images</h3>
+      <div class="info">
+        Bonyeza kitufe — app itatengeneza picha zote kwa <strong>Pollinations AI</strong> (bure, hakuna key). Subiri dakika 1-3 kwa scenes zote.
+      </div>
+      <div class="progress"><div class="progress-fill" id="genProgress"></div></div>
+      <div id="genStatus" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;">—</div>
+      <button class="btn-primary" onclick="generateAllImages()" id="genImgBtn">🎨 Generate All Images</button>
+    </div>
+  </div>
+
+  <!-- VOICE TAB -->
+  <div id="tab-voice" style="display:none">
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🔑 ElevenLabs API Key</h3>
+      <div class="info">
+        Weka API Key yako ya ElevenLabs hapa kwa sauti za kibinadamu. Bila key, app itatumia sauti ya browser (roboti). Pata key bure kwenye <strong>elevenlabs.io</strong>.
+      </div>
+      <label>ElevenLabs API Key</label>
+      <input type="password" id="elevenKey" placeholder="sk_...">
+      <button class="btn-secondary" onclick="saveElevenKey()">💾 Hifadhi Key</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🎤 Voice Settings</h3>
+      <label>Voice</label>
+      <select id="voiceSelect"></select>
+      <label>Speed</label>
+      <input type="range" id="voiceSpeed" min="0.5" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('speedLbl').innerText=this.value+'x'">
+      <div style="text-align:center;font-size:11px;color:var(--muted);" id="speedLbl">1.0x</div>
+      <button class="btn-secondary" onclick="testVoice()" style="margin-top:10px;">🔊 Test Voice</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🎙️ Generate Voiceover</h3>
+      <div class="info">
+        Bonyeza — app itatengeneza sauti ya kila scene kwa ElevenLabs. Inahitaji API key.
+      </div>
+      <div class="progress"><div class="progress-fill" id="voiceProgress"></div></div>
+      <div id="voiceStatus" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;">—</div>
+      <button class="btn-primary" onclick="generateAllVoices()" id="genVoiceBtn">🎙️ Generate Voiceover</button>
+    </div>
+  </div>
+
+  <!-- MUSIC TAB -->
+  <div class="tab-panel" id="tab-music" style="display:none">
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🔑 Suno AI API Key</h3>
+      <div class="info">
+        Weka API Key yako ya Suno AI hapa kwa muziki wa hali ya juu. Bila key, app itatumia muziki rahisi (Web Audio). Pata key kwenye <strong>sunoapi.org</strong>.
+      </div>
+      <label>Suno AI API Key</label>
+      <input type="password" id="sunoKey" placeholder="suno_...">
+      <button class="btn-secondary" onclick="saveSunoKey()">💾 Hifadhi Key</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🎵 Background Music</h3>
+      <div class="info">
+        Music inatengenezwa kwa <strong>Suno AI</strong> (inahitaji API key) au <strong>Web Audio API</strong> (bure).
+      </div>
+      <label>Music Style</label>
+      <select id="musicStyle">
+        <option value="happy">😊 Happy (C major)</option>
+        <option value="playful">🎪 Playful (G major)</option>
+        <option value="gentle">🌙 Gentle lullaby (F major)</option>
+        <option value="adventure">🚀 Adventure (D major)</option>
+        <option value="none">🔇 No music</option>
+      </select>
+      <label>Volume</label>
+      <input type="range" id="musicVolume" min="0" max="1" step="0.1" value="0.3" oninput="document.getElementById('musicVolLbl').innerText=Math.round(this.value*100)+'%'">
+      <div style="text-align:center;font-size:11px;color:var(--muted);" id="musicVolLbl">30%</div>
+      <button class="btn-secondary" onclick="previewMusic()" style="margin-top:10px;">▶ Preview Music</button>
+      <button class="btn-secondary" onclick="stopMusic()" style="margin-top:8px;">⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- EXPORT TAB -->
+  <div class="tab-panel" id="tab-export" style="display:none">
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🔑 Agnes AI API Key</h3>
+      <div class="info">
+        Weka API Key yako ya Agnes AI hapa kwa video halisi za animation. Key itahifadhiwa kwenye simu yako pekee (localStorage). <strong>Usiiweke kwenye code moja kwa moja.</strong>
+      </div>
+      <label>Agnes AI API Key</label>
+      <input type="password" id="agnesApiKeyInput" placeholder="sk-...">
+      <button class="btn-secondary" onclick="saveAgnesApiKey()">💾 Hifadhi Key</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">📊 Project Status</h3>
+      <div id="projectStats"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">🎬 Generate Video Clips (Agnes AI)</h3>
+      <div class="warn">
+        ⚠️ Kila clip ni sekunde 5. Kwa video ya dakika 7, unahitaji clips 84. Agnes AI inaruhusu <strong>video 1 kwa dakika moja</strong> kwa watumiaji wa bure, hivyo itachukua <strong>dakika 84</strong> kutengeneza clips zote. Acha tab ifungue.
+      </div>
+      <div class="progress"><div class="progress-fill" id="clipProgress"></div></div>
+      <div id="clipStatus" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;">—</div>
+      <button class="btn-primary" onclick="generateAllClips()" id="genClipBtn">🎬 Generate All Video Clips</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">📤 Unganisha Clips (MP4)</h3>
+      <div class="warn">
+        ⚠️ Kuunganisha clips kwa ffmpeg.wasm inahitaji nafasi ya kumbukumbu. Video ya dakika 7 inaweza kuchukua dakika 5-10 kuunganisha.
+      </div>
+      <div class="progress"><div class="progress-fill" id="exportProgress"></div></div>
+      <div id="exportStatus" style="font-size:12px;color:var(--muted);text-align:center;margin:8px 0;">—</div>
+      <button class="btn-primary" onclick="concatenateAndExport()" id="exportBtn">🎬 Unganisha na Download MP4</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;color:var(--accent);font-size:16px;">💾 Save / Load</h3>
+      <button class="btn-secondary" onclick="saveProject()">💾 Save Project</button>
+      <button class="btn-secondary" onclick="loadProject()">📂 Load Project</button>
+      <button class="btn-secondary" onclick="downloadProject()">📥 Download Project JSON</button>
+      <label style="margin-top:12px;">Import Project JSON</label>
+      <input type="file" id="importFile" accept=".json" onchange="importProject(event)">
+    </div>
+  </div>
+</div>
+
+<div id="universalModal" class="modal"><div class="modal-content"><div id="modalInner" style="padding-top:20px;"></div></div></div>
+
+<script>
+/* ============================================================
+   CARTOON STUDIO PRO - Agnes AI + ElevenLabs + Suno AI
+   ============================================================ */
+
+const STORAGE = { CURRENT: 'cs_current', PROJECTS: 'cs_projects' };
+let project = {
+  title: '',
+  lang: 'en',
+  style: '',
+  scenes: [],
+  voice: { engine: 'eleven', voiceName: '', speed: 1.0, elevenKey: '' },
+  music: { style: 'happy', volume: 0.3, sunoKey: '' }
+};
+let currentSceneIdx = 0;
+let isPlaying = false;
+let audioCtx = null;
+let ffmpeg = null;
+
+/* ============ UTILS ============ */
+function toast(msg, d = 3000) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.innerText = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), d);
+}
+
+function openModal(html) {
+  document.getElementById('modalInner').innerHTML = html;
+  document.getElementById('universalModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('universalModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+/* ============ TABS ============ */
+function switchTab(name, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('tab-' + name).style.display = 'block';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (name === 'export') renderProjectStats();
+  if (name === 'scenes') renderScenes();
+  if (name === 'export') loadAgnesApiKeyToInput();
+  if (name === 'voice') loadElevenKeyToInput();
+  if (name === 'music') loadSunoKeyToInput();
+  window.scrollTo(0, 0);
+}
+
+/* ============ AGNES AI API KEY ============ */
+function saveAgnesApiKey() {
+  const key = document.getElementById('agnesApiKeyInput').value.trim();
+  if (key) {
+    localStorage.setItem('agnes_api_key', key);
+    toast('✅ Agnes AI API Key imehifadhiwa');
+  } else {
+    localStorage.removeItem('agnes_api_key');
+    toast('🗑️ API Key imeondolewa');
+  }
+}
+
+function loadAgnesApiKeyToInput() {
+  const savedKey = localStorage.getItem('agnes_api_key');
+  if (savedKey) {
+    document.getElementById('agnesApiKeyInput').value = savedKey;
+  }
+}
+
+function getAgnesApiKey() {
+  const key = localStorage.getItem('agnes_api_key');
+  if (!key) {
+    toast('❌ Tafadhali weka Agnes AI API Key kwanza kwenye tab ya Export');
+    return null;
+  }
+  return key;
+}
+
+/* ============ ELEVENLABS API KEY ============ */
+function saveElevenKey() {
+  const key = document.getElementById('elevenKey').value.trim();
+  if (key) {
+    localStorage.setItem('eleven_api_key', key);
+    toast('✅ ElevenLabs API Key imehifadhiwa');
+  } else {
+    localStorage.removeItem('eleven_api_key');
+    toast('🗑️ API Key imeondolewa');
+  }
+}
+
+function loadElevenKeyToInput() {
+  const savedKey = localStorage.getItem('eleven_api_key');
+  if (savedKey) {
+    document.getElementById('elevenKey').value = savedKey;
+  }
+}
+
+function getElevenApiKey() {
+  return localStorage.getItem('eleven_api_key');
+}
+
+/* ============ SUNO AI API KEY ============ */
+function saveSunoKey() {
+  const key = document.getElementById('sunoKey').value.trim();
+  if (key) {
+    localStorage.setItem('suno_api_key', key);
+    toast('✅ Suno AI API Key imehifadhiwa');
+  } else {
+    localStorage.removeItem('suno_api_key');
+    toast('🗑️ API Key imeondolewa');
+  }
+}
+
+function loadSunoKeyToInput() {
+  const savedKey = localStorage.getItem('suno_api_key');
+  if (savedKey) {
+    document.getElementById('sunoKey').value = savedKey;
+  }
+}
+
+function getSunoApiKey() {
+  return localStorage.getItem('suno_api_key');
+}
+
+/* ============ STORY GENERATION ============ */
+function useTemplate(type) {
+  const templates = {
+    share: {
+      en: { title: "The Little Lion Who Learned to Share", char: "A small golden lion cub with a tiny red scarf who loves mangoes", outline: "The lion finds a mango tree full of fruit. He doesn't want to share. His friends feel sad. He learns sharing makes everyone happy." },
+      sw: { title: "Simba Mdogo Anayejifunza Kushirikiana", char: "Simba mdogo wa dhahabu mwenye shanga nyekundu ndogo anayependa maembe", outline: "Simba anapata mti wa maembe. Hataki kushirikiana. Marafiki zake wanahuzunika. Anajifunza kushirikiana kunafanya kila mtu afurahi." }
+    },
+    brave: {
+      en: { title: "The Brave Little Elephant", char: "A tiny blue elephant with big ears and a yellow bow tie", outline: "The elephant is scared of the dark. His mother tells him to be brave. He faces his fear. He discovers the dark isn't scary." },
+      sw: { title: "Tembo Mdogo Jasiri", char: "Tembo mdogo wa bluu mwenye masikio makubwa na tai ya njano", outline: "Tembo anaogopa giza. Mama yake anamwambia kuwa jasiri. Anakabiliana na hofu yake. Anagundua giza halitishi." }
+    },
+    friends: {
+      en: { title: "My New Best Friend", char: "A yellow duckling wearing a blue cap", outline: "The duckling is lonely. He meets a turtle. They play together. They become best friends." },
+      sw: { title: "Rafiki Yangu Mpya", char: "Bata mdogo wa njano mwenye kofia ya bluu", outline: "Bata ana upweke. Anakutana na kobe. Wanacheza pamoja. Wanakuwa marafiki bora." }
+    },
+    abc: {
+      en: { title: "Learn ABC with Coco", char: "A friendly green dinosaur with a red backpack", outline: "Coco teaches letters A to Z with fun pictures and sounds." },
+      sw: { title: "Jifunze ABC na Coco", char: "Dinosaur mzuri wa kijani mwenye mkoba mwekundu", outline: "Coco anafundisha herufi A hadi Z kwa picha na sauti za kufurahisha." }
+    },
+    numbers: {
+      en: { title: "Counting 1 to 10 with Bunny", char: "A fluffy white bunny with a pink ribbon", outline: "Bunny counts from 1 to 10 using colorful fruits and toys." },
+      sw: { title: "Kuhesabu 1 hadi 10 na Sungura", char: "Sungura mweupe mwenye utepe wa pinki", outline: "Sungura anahesabu kutoka 1 hadi 10 kwa matunda na vitu vya rangi." }
+    },
+    colors: {
+      en: { title: "The Rainbow Colors Song", char: "A cheerful orange cat wearing a party hat", outline: "The cat sings about red, blue, yellow, green, and purple. Each color has a fun object." },
+      sw: { title: "Wimbo wa Rangi za Upinde", char: "Paka wa rangi ya machungwa mwenye kofia ya sherehe", outline: "Paka anaimba kuhusu nyekundu, bluu, njano, kijani na zambarau. Kila rangi ina kitu cha kufurahisha." }
+    }
+  };
+  const t = templates[type][project.lang];
+  document.getElementById('projectTitle').value = t.title;
+  document.getElementById('mainChar').value = t.char;
+  document.getElementById('storyOutline').value = t.outline;
+  toast('✅ Template loaded');
+}
+
+async function generateStory() {
+  const title = document.getElementById('projectTitle').value.trim();
+  const lang = document.getElementById('projectLang').value;
+  const style = document.getElementById('projectStyle').value;
+  const char = document.getElementById('mainChar').value.trim();
+  const outline = document.getElementById('storyOutline').value.trim();
+
+  if (!title || !char) { toast('❌ Jaza Title na Main Character'); return; }
+
+  project.title = title;
+  project.lang = lang;
+  project.style = style;
+
+  const btn = document.getElementById('genStoryBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+  const scenePrompts = buildScenePrompt(outline, char, lang);
+  const scenes = scenePrompts.map((p, i) => ({
+    id: Date.now() + i,
+    text: p.text,
+    imagePrompt: p.image,
+    videoPrompt: p.video,
+    imageUrl: null,
+    videoUrl: null,
+    audioUrl: null,
+    audioText: p.text,
+    duration: 5,
+    imageStatus: 'pending',
+    videoStatus: 'pending',
+    audioStatus: 'pending'
+  }));
+
+  project.scenes = scenes;
+  saveCurrent();
+  renderScenes();
+  switchTab('scenes', document.querySelectorAll('.tab')[1]);
+
+  btn.disabled = false;
+  btn.innerHTML = '✨ Generate Scene Plan';
+  toast('✅ Scenes ' + scenes.length + ' zimeundwa!');
+}
+
+function buildScenePrompt(outline, char, lang) {
+  const baseText = lang === 'sw' ? {
+    intro: `Karibu kwenye hadithi! Leo tutafuata ${char.split(' ').slice(0, 4).join(' ')}.`,
+    scenes: [
+      'Siku moja asubuhi, jua liliwaka na ndege walikuwa wakiimba.',
+      'Rafiki zetu walikutana mahali pazuri.',
+      'Kitu kizuri kilikuwa kimewepo — kilifurahisha kila mtu!',
+      'Lakini kuna tatizo dogo lilitokea.',
+      'Wote walifikiri kwa bidii kuhusu jinsi ya kulitatua.',
+      'Walijaribu njia moja, kisha nyingine.',
+      'Hatimaye, wote walifanya kazi pamoja!',
+      'Kila kitu kilikuwa kizuri tena.',
+      'Wote walifurahi na kucheza pamoja.'
+    ],
+    outro: 'Na hivyo ndivyo hadithi inaisha. Kwaheri!'
+  } : {
+    intro: `Welcome to our story! Today we follow our little friend.`,
+    scenes: [
+      'One sunny morning, the birds were singing happily.',
+      'Our friends met in a beautiful place.',
+      'Something wonderful was there — it made everyone smile!',
+      'But a small problem appeared.',
+      'Everyone thought hard about how to fix it.',
+      'They tried one way, then another.',
+      'Finally, they worked together!',
+      'Everything was wonderful again.',
+      'They all played and laughed together.'
+    ],
+    outro: 'And that is the end of our story. Goodbye!'
+  };
+
+  const style = project.style || 'cute 3D Pixar style';
+  const charShort = char.split(' ').slice(0, 6).join(' ');
+
+  const result = [];
+  result.push({
+    text: baseText.intro,
+    image: `${style}. Character: ${charShort}. Title card of a children cartoon, text "${project.title}", centered, colorful background, cheerful`,
+    video: `A cheerful title card for a children's cartoon titled "${project.title}". The character ${charShort} is in the center, waving. Colorful background.`
+  });
+  baseText.scenes.forEach((t, i) => {
+    result.push({
+      text: t,
+      image: `${style}. Character: ${charShort}. Scene ${i + 1}: ${t}. Kids cartoon, 2D animation style, vibrant colors, consistent character design, high quality`,
+      video: `Scene ${i + 1}: ${t}. Character: ${charShort}. Animated kids cartoon style, vibrant colors, smooth motion.`
+    });
+  });
+  result.push({
+    text: baseText.outro,
+    image: `${style}. Character: ${charShort}. Happy ending scene, waving goodbye, sun setting, warm colors, consistent character design`,
+    video: `Happy ending scene. ${charShort} is waving goodbye. Sun setting, warm colors. Animated kids cartoon style.`
+  });
+  return result;
+}
+
+/* ============ SCENES MANAGEMENT ============ */
+function renderScenes() {
+  const c = document.getElementById('scenesList');
+  if (!c) return;
+  if (project.scenes.length === 0) {
+    c.innerHTML = '<div class="info" style="text-align:center;">Hakuna scenes. Bonyeza "Add" au generate story.</div>';
+    return;
+  }
+  c.innerHTML = project.scenes.map((s, i) => {
+    const statusChip = s.imageStatus === 'done' ? '<span class="chip chip-done">🖼️ Image ✓</span>' :
+                       s.imageStatus === 'fail' ? '<span class="chip chip-fail">🖼️ Fail</span>' :
+                       s.imageStatus === 'loading' ? '<span class="chip chip-pending">🖼️ Loading...</span>' :
+                       '<span class="chip chip-pending">🖼️ Pending</span>';
+    const videoChip = s.videoStatus === 'done' ? '<span class="chip chip-done">🎬 Video ✓</span>' :
+                      s.videoStatus === 'loading' ? '<span class="chip chip-pending">🎬 Loading...</span>' :
+                      '<span class="chip chip-pending">🎬 Pending</span>';
+    const voiceChip = s.audioStatus === 'done' ? '<span class="chip chip-done">🎤 Voice ✓</span>' :
+                      s.audioStatus === 'loading' ? '<span class="chip chip-pending">🎤 Loading...</span>' :
+                      '<span class="chip chip-pending">🎤 Pending</span>';
+    const thumbStyle = s.imageUrl ? `background-image:url('${s.imageUrl}')` : '';
+    return `
+      <div class="scene-item">
+        <div class="scene-thumb" style="${thumbStyle}">${s.imageUrl ? '' : (i + 1)}</div>
+        <div class="scene-info">
+          <strong>Scene ${i + 1} • ${s.duration}s</strong>
+          <small>${s.text.substring(0, 80)}${s.text.length > 80 ? '...' : ''}</small>
+          <div style="margin-top:6px;">${statusChip} ${videoChip} ${voiceChip}</div>
+        </div>
+        <div class="scene-actions">
+          <button class="icon-btn" onclick="editScene(${i})">✏️</button>
+          <button class="icon-btn" onclick="previewScene(${i})">👁️</button>
+          <button class="icon-btn danger" onclick="deleteScene(${i})">🗑️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addScene() {
+  project.scenes.push({
+    id: Date.now(),
+    text: 'New scene text...',
+    imagePrompt: `${project.style}. Character: ${document.getElementById('mainChar').value.split(' ').slice(0, 6).join(' ')}. Cute cartoon scene, consistent design`,
+    videoPrompt: `A cute cartoon scene with ${document.getElementById('mainChar').value.split(' ').slice(0, 6).join(' ')}. Animated kids cartoon style.`,
+    imageUrl: null,
+    videoUrl: null,
+    audioUrl: null,
+    audioText: 'New scene text...',
+    duration: 5,
+    imageStatus: 'pending',
+    videoStatus: 'pending',
+    audioStatus: 'pending'
+  });
+  saveCurrent();
+  renderScenes();
+}
+
+function deleteScene(i) {
+  if (!confirm('Delete scene ' + (i + 1) + '?')) return;
+  project.scenes.splice(i, 1);
+  saveCurrent();
+  renderScenes();
+}
+
+function editScene(i) {
+  const s = project.scenes[i];
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 style="color:var(--accent);margin-bottom:14px;">✏️ Edit Scene ${i + 1}</h3>
+    <label>Narration Text (voice itasoma hii)</label>
+    <textarea id="editText" style="min-height:100px;">${s.text}</textarea>
+    <label>Video Prompt (Agnes AI itatumia hii kutengeneza video)</label>
+    <textarea id="editVideoPrompt" style="min-height:100px;">${s.videoPrompt}</textarea>
+    <label>Duration (seconds)</label>
+    <input type="number" id="editDuration" value="${s.duration}" min="5" max="5">
+    <button class="btn-primary" onclick="saveSceneEdit(${i})">💾 Save</button>
+  `);
+}
+
+function saveSceneEdit(i) {
+  const s = project.scenes[i];
+  s.text = document.getElementById('editText').value;
+  s.audioText = s.text;
+  s.videoPrompt = document.getElementById('editVideoPrompt').value;
+  s.duration = parseInt(document.getElementById('editDuration').value) || 5;
+  saveCurrent();
+  renderScenes();
+  closeModal();
+  toast('✅ Saved');
+}
+
+/* ============ VIDEO GENERATION (Agnes AI) ============ */
+async function generateAllClips() {
+  const btn = document.getElementById('genClipBtn');
+  if (btn.disabled) return;
+
+  const apiKey = getAgnesApiKey();
+  if (!apiKey) return;
+
+  const scenesToGenerate = project.scenes.filter(s => s.videoStatus !== 'done');
+  if (scenesToGenerate.length === 0) {
+    toast('✅ Clips zote zimetengenezwa tayari!');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Inatengeneza clips...';
+
+  const total = scenesToGenerate.length;
+  let done = 0;
+
+  for (let i = 0; i < project.scenes.length; i++) {
+    const s = project.scenes[i];
+    if (s.videoStatus === 'done') { done++; continue; }
+
+    s.videoStatus = 'loading';
+    renderScenes();
+
+    try {
+      const videoUrl = await generateAgnesVideo(s.videoPrompt, apiKey);
+      s.videoUrl = videoUrl;
+      s.videoStatus = 'done';
+      toast(`✅ Clip ya scene ${i + 1} imetengenezwa!`);
+    } catch (e) {
+      console.error('Clip generation failed:', e);
+      s.videoStatus = 'fail';
+      toast(`❌ Scene ${i + 1} imeshindwa: ${e.message}`);
+    }
+
+    done++;
+    document.getElementById('clipProgress').style.width = (done / total * 100) + '%';
+    document.getElementById('clipStatus').innerText = `${done} / ${total} clips`;
+    saveCurrent();
+    renderScenes();
+
+    // Subiri dakika 1 kwa sababu RPM ni 1
+    if (done < total) {
+      await new Promise(r => setTimeout(r, 60000));
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🎬 Generate All Video Clips';
+  toast('✅ Clips zote zimetengenezwa!');
+}
+
+async function generateAgnesVideo(prompt, apiKey) {
+  // 1. Tengeneza task
+  const createResponse = await fetch('https://apihub.agnes-ai.com/v1/videos', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'agnes-video-v2.0',
+      prompt: prompt,
+      mode: 'text',
+      size: '720P',
+      aspect_ratio: '16:9',
+      num_frames: 121, // Sekunde 5 kwa 24fps (8n+1)
+      frame_rate: 24
+    })
+  });
+
+  if (!createResponse.ok) {
+    const err = await createResponse.json();
+    throw new Error(err.error?.message || 'Task creation failed');
+  }
+
+  const createData = await createResponse.json();
+  const videoId = createData.video_id || createData.id;
+
+  if (!videoId) {
+    throw new Error('No video_id returned');
+  }
+
+  // 2. Subiri (polling) hadi video itakapomalizika
+  let videoUrl = null;
+  let attempts = 0;
+  const maxAttempts = 120; // Subiri hadi dakika 2
+
+  while (!videoUrl && attempts < maxAttempts) {
+    await new Promise(r => setTimeout(r, 2000)); // Subiri sekunde 2
+
+    const statusResponse = await fetch(
+      `https://apihub.agnes-ai.com/agnesapi?video_id=${videoId}&model_name=agnes-video-v2.0`,
+      {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      }
+    );
+
+    if (!statusResponse.ok) {
+      throw new Error('Status check failed');
+    }
+
+    const statusData = await statusResponse.json();
+
+    if (statusData.status === 'completed') {
+      videoUrl = statusData.metadata?.url || statusData.url || statusData.output?.url;
+      break;
+    } else if (statusData.status === 'failed') {
+      throw new Error(statusData.error?.message || 'Video generation failed');
+    }
+
+    attempts++;
+  }
+
+  if (!videoUrl) {
+    throw new Error('Video generation timed out');
+  }
+
+  return videoUrl;
+}
+
+/* ============ VIDEO CONCATENATION (ffmpeg.wasm) ============ */
+async function concatenateAndExport() {
+  const btn = document.getElementById('exportBtn');
+  if (btn.disabled) return;
+
+  const scenesWithVideo = project.scenes.filter(s => s.videoStatus === 'done' && s.videoUrl);
+  if (scenesWithVideo.length === 0) {
+    toast('❌ Hakuna clips zilizotengenezwa. Tengeneza clips kwanza.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Inaunganisha...';
+
+  try {
+    // 1. Pakua ffmpeg
+    document.getElementById('exportStatus').innerText = 'Inapakua ffmpeg...';
+    const { FFmpeg } = FFmpegWASM;
+    ffmpeg = new FFmpeg();
+
+    ffmpeg.on('log', ({ message }) => {
+      console.log('ffmpeg:', message);
+    });
+
+    await ffmpeg.load({
+      coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+      wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+    });
+
+    document.getElementById('exportStatus').innerText = 'Inapakua clips...';
+
+    // 2. Pakua clips zote
+    const clipData = [];
+    for (let i = 0; i < scenesWithVideo.length; i++) {
+      const s = scenesWithVideo[i];
+      const response = await fetch(s.videoUrl);
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      clipData.push(new Uint8Array(arrayBuffer));
+      document.getElementById('exportProgress').style.width = ((i + 1) / scenesWithVideo.length * 50) + '%';
+    }
+
+    // 3. Andika clips kwenye ffmpeg
+    for (let i = 0; i < clipData.length; i++) {
+      ffmpeg.writeFile(`clip${i}.mp4`, clipData[i]);
+    }
+
+    // 4. Tengeneza faili la orodha
+    const listContent = clipData.map((_, i) => `file 'clip${i}.mp4'`).join('\n');
+    ffmpeg.writeFile('list.txt', new TextEncoder().encode(listContent));
+
+    // 5. Unganisha clips
+    document.getElementById('exportStatus').innerText = 'Inaunganisha clips...';
+    await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', 'output.mp4']);
+
+    // 6. Pakua video
+    const outputData = ffmpeg.readFile('output.mp4');
+    const outputBlob = new Blob([outputData.buffer], { type: 'video/mp4' });
+    const url = URL.createObjectURL(outputBlob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (project.title || 'cartoon').replace(/[^\w]/g, '_') + '_' + Date.now() + '.mp4';
+    a.click();
+
+    document.getElementById('exportProgress').style.width = '100%';
+    document.getElementById('exportStatus').innerText = '✅ Download complete!';
+    toast('✅ Video imeunganishwa na kupakuliwa!');
+
+  } catch (e) {
+    console.error('Concatenation failed:', e);
+    toast('❌ Hitilafu: ' + e.message);
+    document.getElementById('exportStatus').innerText = '❌ Hitilafu';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🎬 Unganisha na Download MP4';
+  }
+}
+
+/* ============ IMAGE GENERATION (Pollinations) ============ */
+async function generateImage(prompt) {
+  const seed = Math.floor(Math.random() * 1000000);
+  const cleanPrompt = prompt.substring(0, 400).replace(/[^\w\s,.-]/g, '');
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1280&height=720&nologo=true&seed=${seed}&model=flux`;
+  return url;
+}
+
+async function generateAllImages() {
+  const btn = document.getElementById('genImgBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+  const total = project.scenes.length;
+  let done = 0;
+
+  for (let i = 0; i < total; i++) {
+    const s = project.scenes[i];
+    if (s.imageStatus === 'done') { done++; continue; }
+    s.imageStatus = 'loading';
+    renderScenes();
+    try {
+      const url = await generateImage(s.imagePrompt);
+      await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => { s.imageUrl = url; s.imageStatus = 'done'; resolve(); };
+        img.onerror = () => { s.imageStatus = 'fail'; reject(); };
+        img.src = url;
+        setTimeout(() => reject(new Error('timeout')), 45000);
+      });
+    } catch (e) {
+      s.imageStatus = 'fail';
+    }
+    done++;
+    document.getElementById('genProgress').style.width = (done / total * 100) + '%';
+    document.getElementById('genStatus').innerText = `${done} / ${total} scenes`;
+    saveCurrent();
+    renderScenes();
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🎨 Generate All Images';
+  toast('✅ Images done!');
+}
+
+/* ============ VOICE (ElevenLabs + Browser TTS) ============ */
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  const select = document.getElementById('voiceSelect');
+  if (!select) return;
+  select.innerHTML = '';
+  const langFilter = project.lang === 'sw' ? ['sw', 'en'] : ['en'];
+  voices.forEach(v => {
+    if (langFilter.some(l => v.lang.toLowerCase().startsWith(l))) {
+      const opt = document.createElement('option');
+      opt.value = v.name;
+      opt.textContent = `${v.name} (${v.lang})${v.default ? ' ⭐' : ''}`;
+      select.appendChild(opt);
+    }
+  });
+}
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = loadVoices;
+  setTimeout(loadVoices, 100);
+}
+
+function testVoice() {
+  const text = project.lang === 'sw' ? 'Habari, hii ni sauti ya jaribio.' : 'Hello, this is a test voice.';
+  speakText(text);
+}
+
+function speakText(text) {
+  return new Promise((resolve) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voiceName = document.getElementById('voiceSelect').value;
+    const voices = speechSynthesis.getVoices();
+    const voice = voices.find(v => v.name === voiceName);
+    if (voice) utterance.voice = voice;
+    utterance.rate = parseFloat(document.getElementById('voiceSpeed').value) || 1.0;
+    utterance.pitch = 1.1;
+    utterance.onend = resolve;
+    utterance.onerror = resolve;
+    speechSynthesis.speak(utterance);
+  });
+}
+
+async function generateAllVoices() {
+  const btn = document.getElementById('genVoiceBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Recording...';
+
+  const apiKey = getElevenApiKey();
+  const total = project.scenes.length;
+
+  for (let i = 0; i < total; i++) {
+    const s = project.scenes[i];
+    s.audioStatus = 'loading';
+    renderScenes();
+    try {
+      if (apiKey) {
+        await generateElevenLabsAudio(s, apiKey);
+      } else {
+        s.audioStatus = 'done';
+        s.audioUrl = null;
+      }
+    } catch (e) {
+      console.error('Voice generation failed:', e);
+      s.audioStatus = 'fail';
+    }
+    document.getElementById('voiceProgress').style.width = ((i + 1) / total * 100) + '%';
+    document.getElementById('voiceStatus').innerText = `${i + 1} / ${total}`;
+    renderScenes();
+  }
+  
+  saveCurrent();
+
+  btn.disabled = false;
+  btn.innerHTML = '🎙️ Generate Voiceover';
+  toast('✅ Voiceover ready!');
+}
+
+async function generateElevenLabsAudio(scene, apiKey) {
+  const voiceId = '21m00Tcm4TlvDq8ikWAM'; // Rachel (default female)
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: scene.audioText,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+    })
+  });
+  if (!r.ok) throw new Error('ElevenLabs failed');
+  const blob = await r.blob();
+  scene.audioUrl = await blobToDataURL(blob);
+  scene.audioStatus = 'done';
+}
+
+function blobToDataURL(blob) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
+
+/* ============ MUSIC (Web Audio + Suno AI) ============ */
+let musicNodes = [];
+
+function playMusic(style, volume) {
+  stopMusic();
+  if (style === 'none') return;
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+
+  const scales = {
+    happy: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25],
+    playful: [392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99],
+    gentle: [349.23, 392.00, 440.00, 466.16, 523.25, 587.33, 659.25, 698.46],
+    adventure: [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37, 587.33]
+  };
+  const scale = scales[style] || scales.happy;
+
+  const master = audioCtx.createGain();
+  master.gain.value = volume;
+  master.connect(audioCtx.destination);
+
+  const notes = [0, 2, 4, 7, 4, 2, 0, 4, 2, 0, 7, 4, 2, 4, 0, 2];
+  let time = audioCtx.currentTime;
+  const noteDur = 0.45;
+
+  for (let i = 0; i < notes.length; i++) {
+    const freq = scale[notes[i]];
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(0.4, time + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.01, time + noteDur * 0.9);
+    osc.connect(g); g.connect(master);
+    osc.start(time);
+    osc.stop(time + noteDur);
+    musicNodes.push(osc);
+    time += noteDur;
+
+    if (i % 4 === 0) {
+      const bass = audioCtx.createOscillator();
+      const bg = audioCtx.createGain();
+      bass.type = 'sine';
+      bass.frequency.value = freq / 2;
+      bg.gain.setValueAtTime(0, time);
+      bg.gain.linearRampToValueAtTime(0.3, time + 0.05);
+      bg.gain.exponentialRampToValueAtTime(0.01, time + noteDur * 3.5);
+      bass.connect(bg); bg.connect(master);
+      bass.start(time);
+      bass.stop(time + noteDur * 3.5);
+      musicNodes.push(bass);
+    }
+  }
+}
+
+function previewMusic() {
+  const style = document.getElementById('musicStyle').value;
+  const vol = parseFloat(document.getElementById('musicVolume').value);
+  playMusic(style, vol);
+  toast('🎵 Playing...');
+}
+
+function stopMusic() {
+  musicNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+  musicNodes = [];
+}
+
+/* ============ PREVIEW ============ */
+function previewScene(i) {
+  currentSceneIdx = i;
+  drawScene();
+}
+
+function previewPrev() {
+  if (currentSceneIdx > 0) currentSceneIdx--;
+  drawScene();
+}
+function previewNext() {
+  if (currentSceneIdx < project.scenes.length - 1) currentSceneIdx++;
+  drawScene();
+}
+
+function drawScene() {
+  const canvas = document.getElementById('previewCanvas');
+  const ctx = canvas.getContext('2d');
+  const s = project.scenes[currentSceneIdx];
+  if (!s) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height); return; }
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (s.imageUrl) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(0,0,0,.7)';
+      ctx.fillRect(0, canvas.height - 130, canvas.width, 130);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 42px Arial';
+      ctx.textAlign = 'center';
+      wrapText(ctx, s.text, canvas.width / 2, canvas.height - 70, canvas.width - 80, 50);
+    };
+    img.onerror = () => {
+      ctx.fillStyle = '#1a1a2a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#f472b6';
+      ctx.font = 'bold 40px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Image loading...', canvas.width / 2, canvas.height / 2);
+    };
+    img.src = s.imageUrl;
+  } else {
+    ctx.fillStyle = '#1a1a2a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f472b6';
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('No image yet — generate!', canvas.width / 2, canvas.height / 2);
+  }
+
+  document.getElementById('previewSceneInfo').innerText = `Scene ${currentSceneIdx + 1} / ${project.scenes.length}`;
+  document.getElementById('previewDuration').innerText = s.duration + 's';
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  const lines = [];
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && n > 0) {
+      lines.push(line);
+      line = words[n] + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line);
+  const startY = y - (lines.length - 1) * lineHeight / 2;
+  lines.forEach((l, i) => {
+    ctx.fillText(l.trim(), x, startY + i * lineHeight);
+  });
+}
+
+let playTimeout = null;
+async function previewPlay() {
+  if (isPlaying) {
+    isPlaying = false;
+    clearTimeout(playTimeout);
+    speechSynthesis.cancel();
+    document.getElementById('playBtn').innerText = '▶ Play';
+    return;
+  }
+  isPlaying = true;
+  document.getElementById('playBtn').innerText = '⏸ Stop';
+
+  for (let i = 0; i < project.scenes.length; i++) {
+    if (!isPlaying) break;
+    currentSceneIdx = i;
+    drawScene();
+    const s = project.scenes[i];
+    if (s.audioUrl) {
+      await playAudio(s.audioUrl);
+    } else if ('speechSynthesis' in window) {
+      await speakText(s.text);
+    } else {
+      await new Promise(r => setTimeout(r, s.duration * 1000));
+    }
+  }
+  isPlaying = false;
+  document.getElementById('playBtn').innerText = '▶ Play';
+}
+
+function playAudio(url) {
+  return new Promise(resolve => {
+    const a = new Audio(url);
+    a.onended = resolve;
+    a.onerror = resolve;
+    a.play().catch(resolve);
+  });
+}
+
+/* ============ PROJECT STATS ============ */
+function renderProjectStats() {
+  const c = document.getElementById('projectStats');
+  if (!c) return;
+  const total = project.scenes.length;
+  const imgDone = project.scenes.filter(s => s.imageStatus === 'done').length;
+  const videoDone = project.scenes.filter(s => s.videoStatus === 'done').length;
+  const voiceDone = project.scenes.filter(s => s.audioStatus === 'done').length;
+  const duration = project.scenes.reduce((a, s) => a + s.duration, 0);
+  c.innerHTML = `
+    <div class="grid-3">
+      <div class="mini-box" style="text-align:center;">
+        <div class="stat-val">${total}</div>
+        <div class="stat-lbl">Scenes</div>
+      </div>
+      <div class="mini-box" style="text-align:center;">
+        <div class="stat-val">${imgDone}/${total}</div>
+        <div class="stat-lbl">Images</div>
+      </div>
+      <div class="mini-box" style="text-align:center;">
+        <div class="stat-val">${videoDone}/${total}</div>
+        <div class="stat-lbl">Videos</div>
+      </div>
+      <div class="mini-box" style="text-align:center;">
+        <div class="stat-val">${voiceDone}/${total}</div>
+        <div class="stat-lbl">Voices</div>
+      </div>
+    </div>
+    <div class="mini-box" style="text-align:center;margin-top:10px;">
+      <div class="stat-val">${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}</div>
+      <div class="stat-lbl">Total Duration</div>
+    </div>
+    ${duration < 420 ? '<div class="warn">⚠️ Video ni chini ya dakika 7. Ongeza scenes kwa YouTube monetization.</div>' : '<div class="success">✅ Video inafikia dakika 7+ kwa monetization!</div>'}
+  `;
+}
+
+/* ============ SAVE / LOAD ============ */
+function saveCurrent() {
+  try {
+    const projectCopy = JSON.parse(JSON.stringify(project));
+    projectCopy.scenes.forEach(s => {
+      s.audioUrl = null;
+    });
+    localStorage.setItem(STORAGE.CURRENT, JSON.stringify(projectCopy));
+  } catch(e) {
+    console.warn('Save failed (storage might be full)', e);
+  }
+}
+
+function loadCurrent() {
+  try {
+    const d = localStorage.getItem(STORAGE.CURRENT);
+    if (d) project = JSON.parse(d);
+  } catch (e) {}
+}
+
+function saveProject() {
+  const projects = JSON.parse(localStorage.getItem(STORAGE.PROJECTS) || '{}');
+  projects[project.title || 'Untitled_' + Date.now()] = project;
+  localStorage.setItem(STORAGE.PROJECTS, JSON.stringify(projects));
+  toast('✅ Project saved!');
+}
+
+function loadProject() {
+  const projects = JSON.parse(localStorage.getItem(STORAGE.PROJECTS) || '{}');
+  const names = Object.keys(projects);
+  if (names.length === 0) { toast('Hakuna saved projects'); return; }
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 style="color:var(--accent);margin-bottom:14px;">📂 Load Project</h3>
+    ${names.map(n => `<button class="btn-secondary" style="margin-bottom:8px;" onclick="doLoadProject('${n.replace(/'/g, "\\'")}')">${n}</button>`).join('')}
+  `);
+}
+
+function doLoadProject(name) {
+  const projects = JSON.parse(localStorage.getItem(STORAGE.PROJECTS) || '{}');
+  if (projects[name]) {
+    project = projects[name];
+    saveCurrent();
+    applyProjectToUI();
+    closeModal();
+    toast('✅ Loaded!');
+    switchTab('scenes', document.querySelectorAll('.tab')[1]);
+  }
+}
+
+function applyProjectToUI() {
+  document.getElementById('projectTitle').value = project.title || '';
+  document.getElementById('projectLang').value = project.lang || 'en';
+  document.getElementById('projectStyle').value = project.style || '';
+  document.getElementById('voiceSpeed').value = project.voice?.speed || 1.0;
+  document.getElementById('musicStyle').value = project.music?.style || 'happy';
+  document.getElementById('musicVolume').value = project.music?.volume || 0.3;
+  loadAgnesApiKeyToInput();
+  loadElevenKeyToInput();
+  loadSunoKeyToInput();
+  renderScenes();
+}
+
+function downloadProject() {
+  const data = JSON.stringify(project, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (project.title || 'project').replace(/[^\w]/g, '_') + '.json';
+  a.click();
+}
+
+function importProject(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const p = JSON.parse(evt.target.result);
+      project = p;
+      saveCurrent();
+      applyProjectToUI();
+      toast('✅ Project imported!');
+    } catch (err) { toast('❌ Invalid file'); }
+  };
+  reader.readAsText(file);
+}
+
+function newProject() {
+  if (!confirm('Start new project? Current work itahifadhiwa kwenye browser.')) return;
+  saveProject();
+  project = {
+    title: '',
+    lang: 'en',
+    style: '',
+    scenes: [],
+    voice: { engine: 'eleven', voiceName: '', speed: 1.0, elevenKey: '' },
+    music: { style: 'happy', volume: 0.3, sunoKey: '' }
+  };
+  saveCurrent();
+  applyProjectToUI();
+  toast('✅ New project');
+}
+
+/* ============ HELP ============ */
+function showHelp() {
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 style="color:var(--accent);">📚 Jinsi ya Kutumia</h2>
+    <div style="font-size:13px;line-height:1.8;color:var(--text);">
+      <strong style="color:var(--accent2);">1. Story</strong><br>
+      Weka title, chagua template, jaza character na outline.<br><br>
+
+      <strong style="color:var(--accent2);">2. Scenes</strong><br>
+      Bonyeza "Generate All Images" — AI itatengeneza picha zote.<br><br>
+
+      <strong style="color:var(--accent2);">3. Voice</strong><br>
+      Weka ElevenLabs API Key, kisha bonyeza "Generate Voiceover".<br><br>
+
+      <strong style="color:var(--accent2);">4. Music</strong><br>
+      Weka Suno AI API Key kwa muziki wa hali ya juu.<br><br>
+
+      <strong style="color:var(--accent2);">5. Export</strong><br>
+      Weka Agnes AI API Key, bonyeza "Generate All Video Clips", kisha "Unganisha na Download MP4".<br><br>
+
+      <strong style="color:var(--green);">💡 Tips:</strong><br>
+      • Video ya dakika 7+ inahitaji scenes ~84 (kila clip ni sekunde 5)<br>
+      • Agnes AI inaruhusu video 1 kwa dakika moja kwa watumiaji wa bure<br>
+      • ElevenLabs na Suno AI zinahitaji API key (zote zina free tier)<br>
+      • Download MP4 na upload YouTube moja kwa moja
+    </div>
+  `);
+}
+
+/* ============ INIT & PWA ============ */
+window.addEventListener('DOMContentLoaded', () => {
+  loadCurrent();
+  applyProjectToUI();
+  drawScene();
+});
+</script>
+</body>
+</html>
